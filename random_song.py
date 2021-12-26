@@ -1,9 +1,9 @@
-# this is cribbed from a random song getter by genre
 """
-Module that makes use of the Spotify Web API to retrieve pseudo-random songs based
+Module that makes use of the Spotify Web API to retrieve pseudo-random obscure songs based
 or not on a given exiting Spotify genre (look at genres.json, filled with info
 scrapped from http://everynoise.com/everynoise1d.cgi?scope=all&vector=popularity)
 Spotify Ref: https://developer.spotify.com/documentation/web-api/reference-beta/#category-search
+
 """
 from base64 import b64encode
 from json import load, loads
@@ -12,14 +12,18 @@ from requests import post, get
 from sys import argv, exit
 from fuzzysearch import find_near_matches
 
-# Client Keys
-
-
 # Spotify API URIs
 SPOTIFY_TOKEN_URL = "https://accounts.spotify.com/api/token"
 SPOTIFY_API_BASE_URL = "https://api.spotify.com"
 API_VERSION = "v1"
 SPOTIFY_API_URL = "{}/{}".format(SPOTIFY_API_BASE_URL, API_VERSION)
+
+# Wildcards for random search
+RANDOM_WILDCARDS = ['%25a%25', 'a%25', '%25a',
+                    '%25e%25', 'e%25', '%25e',
+                    '%25i%25', 'i%25', '%25i',
+                    '%25o%25', 'o%25', '%25o',
+                    '%25u%25', 'u%25', '%25u']
 
 
 def get_token() -> str:
@@ -27,7 +31,7 @@ def get_token() -> str:
         with open('client_secrets.json', 'r') as infile:
             secrets_web = load(infile)['web']
     except FileNotFoundError:
-        print("Couldn't find client_secrets file!")
+        print("Couldn't find client_secrets.json file!")
         exit(1)
 
     client_token = b64encode("{}:{}".format(secrets_web['client_id'],
@@ -45,19 +49,12 @@ def get_token() -> str:
 
 
 def request_valid_song(access_token: str, genre: str) -> dict:
-    # Wildcards for random search
-    random_wildcards = ['%25a%25', 'a%25', '%25a',
-                        '%25e%25', 'e%25', '%25e',
-                        '%25i%25', 'i%25', '%25i',
-                        '%25o%25', 'o%25', '%25o',
-                        '%25u%25', 'u%25', '%25u']
-    wildcard = choice(random_wildcards)
+    wildcard = choice(RANDOM_WILDCARDS)
 
     # Make a request for the Search API with pattern and random index
     authorization_header = {"Authorization": "Bearer {}".format(access_token)}
 
     # Cap the max number of requests until it decides something's up.
-    song = None
     genre_str = "%20genre:%22{}%22".format(genre.replace(" ", "%20"))
     for i in range(51):
         offset = randint(0, 200)
@@ -71,14 +68,13 @@ def request_valid_song(access_token: str, genre: str) -> dict:
                 ),
                 headers=authorization_header
             )
-            song = choice(loads(song_request.text)['tracks']['items'])
+            song: dict = choice(loads(song_request.text)['tracks']['items'])
             return song
         except IndexError:
-            # the reason we're looping here is to find one without an indexerror.
+            # the reason we're looping here is to find one ''without'' an IndexError.
             continue
 
-    if song is None:
-        raise RuntimeError("Exceeded request limit!")
+    raise RuntimeError("Exceeded request limit!")
 
 
 def validate(track: dict, threshold: int) -> bool:
@@ -121,7 +117,7 @@ def main():
 
     # If genre specified by command line argument, choose it.
     # Otherwise, choose randomly. It's seemingly not possible to make it
-    # any genre, or else it starts bugging out.
+    # any genre, or else it starts bugging out and giving random pop songs.
     if n_args == 0 or args[0] == "":
         print("No genre chosen: selecting a genre at random...")
         selected_genre = choice(valid_genres)
@@ -130,11 +126,11 @@ def main():
         selected_genre = (" ".join(args)).lower()
 
     # Call the API for a song that matches the criteria
-    if selected_genre != "" and selected_genre not in valid_genres:
+    if selected_genre not in valid_genres:
         # If genre not found as it is, try fuzzy search with Levenhstein distance 2
         print("Genre entered was '" + selected_genre + "', which is not in the list of genres supported. Attempting "
                                                        "to find similar genre...")
-        valid_genres_to_text: str = " ".join(valid_genres)
+        valid_genres_to_text = " ".join(valid_genres)
         try:
             selected_genre = find_near_matches(selected_genre, valid_genres_to_text, max_l_dist=2)[0].matched
             print("New genre is '" + selected_genre + "'.")
@@ -143,12 +139,12 @@ def main():
             selected_genre = choice(valid_genres)
             print("New genre: " + selected_genre)
 
-    ctr: int = 0
     print("Searching...")
-    while True:
+
+    result = None
+    for ctr in range(255):
         temp_result = request_valid_song(access_token, genre=selected_genre)
         print(ctr)
-        ctr = ctr + 1
         if validate(temp_result, threshold):
             result = temp_result
             break
@@ -159,7 +155,7 @@ def main():
         try:
             print("URL: " + result['preview_url'])
         except TypeError:
-            print("No preview url to print.")
+            print("(No preview url to print.)")
     else:
         print("No song found.")
 
