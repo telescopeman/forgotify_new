@@ -90,6 +90,23 @@ def validate(track: dict, threshold: int) -> bool:
         return False
 
 
+# Displays a message for each step of the search process.
+def print_step(step: int):
+    print(step)
+    """
+    For some reason, this routine just didn't work.
+    if step == 30:
+        print("Still searching...")
+    elif step == 60:
+        print("Still searching...")
+    elif step == 100:
+        print("This search is taking a while...")
+    elif (step % 100) == 0:
+        print("This search is taking a very long time. \n"
+              "It may not be going anywhere. Consider re-running the program.")
+    """
+
+
 def main():
     start_index: int = 1
     threshold: int = 1
@@ -102,7 +119,7 @@ def main():
             break
     # trim our arguments to only include what should be the genre name
     args = argv[start_index:]
-    n_args: int = len(args)
+    n_args = len(args)
 
     # Get a Spotify API token
     access_token = get_token()
@@ -135,6 +152,7 @@ def main():
             selected_genre = find_near_matches(selected_genre, valid_genres_to_text, max_l_dist=2)[0].matched
             print("New genre is '" + selected_genre + "'.")
         except IndexError:
+            # If this didn't work either, just select at random.
             print("Unable to resolve. Selecting a genre at random...")
             selected_genre = choice(valid_genres)
             print("New genre: " + selected_genre)
@@ -144,7 +162,7 @@ def main():
     result = None
     for ctr in range(255):
         temp_result = request_valid_song(access_token, genre=selected_genre)
-        print(ctr)
+        print_step(ctr)
         if validate(temp_result, threshold):
             result = temp_result
             break
