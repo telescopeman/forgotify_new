@@ -156,7 +156,10 @@ def main():
     if result is not None:
         artist = result['artists']
         print(result['name'] + " – " + artist[0]['name'] + " (Popularity " + str(result['popularity']) + ")")
-        print("URL: " + result['preview_url'])
+        try:
+            print("URL: " + result['preview_url'])
+        except TypeError:
+            print("No preview url to print.")
     else:
         print("No song found.")
 
