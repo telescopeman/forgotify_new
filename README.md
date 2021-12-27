@@ -1,4 +1,4 @@
-# Spotify Song Suggestion
+# "Forgotify New" (working title)
 
 Package with tools for music discovery on Spotify.
 
