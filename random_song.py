@@ -56,16 +56,16 @@ def request_valid_song(access_token: str, genre: str):
     genre_str = "%20genre:%22{}%22".format(genre.replace(" ", "%20"))
     for i in range(90):
         offset = randint(0, 200)
+        song_request = get(
+            '{}/search?q={}{}&type=track&offset={}'.format(
+                SPOTIFY_API_URL,
+                wildcard,
+                genre_str,
+                offset
+            ),
+            headers=authorization_header
+        )
         try:
-            song_request = get(
-                '{}/search?q={}{}&type=track&offset={}'.format(
-                    SPOTIFY_API_URL,
-                    wildcard,
-                    genre_str,
-                    offset
-                ),
-                headers=authorization_header
-            )
             song: dict = choice(loads(song_request.text)['tracks']['items'])
             return song
         except IndexError:
@@ -83,21 +83,31 @@ def validate(track: dict, threshold: int) -> bool:
         return False
 
 
-# Displays a message for each step of the search process.
+""" 
+Displays a message for each step of the search process. 
+This is completely aesthetic and doesn't really matter for the program.
+"""
+
+
 def print_step(step: int):
-    print(step)
-    """
-    For some reason, this routine just didn't work.
-    if step == 30:
-        print("Still searching...")
-    elif step == 60:
-        print("Still searching...")
-    elif step == 100:
-        print("This search is taking a while...")
-    elif (step % 100) == 0:
-        print("This search is taking a very long time. \n"
-              "It may not be going anywhere. Consider re-running the program.")
-    """
+    print(".", end="")
+    line_length = 17
+    if step >= line_length and step % line_length == 0:
+        print()
+        mega_step = step / line_length
+        # Must be an integer ^
+        if mega_step < 3:
+            header = "Still searching"
+        elif mega_step < 6:
+            header = "Yet still searching"
+        elif mega_step < 10:
+            header = "And yet still searching"
+        elif mega_step < 20:
+            header = "Continuing searching"
+        else:
+            header = "Something may have gone wrong - you may want to restart the app."
+
+        print(header + "...", end="")
 
 
 def select_genre(input_genre) -> str:
@@ -164,23 +174,24 @@ def main():
         raise ValueError("Threshold is too low to find any songs! Must be " + str(LOWEST_ALLOWED_THRESHOLD) +
                          " or higher!")
 
-    # trim our arguments to only include what should be the genre name
+    # Trim our arguments to only include what should be the genre name
     input_genre = argv[start_index:]
 
     # Get a Spotify API token
     access_token = get_token()
     selected_genre = select_genre(input_genre)
 
-    print("Searching...")
+    print("Searching...", end="")
 
     result = None
-    for ctr in range(255):
+    for ctr in range(20000):
         temp_result = request_valid_song(access_token, genre=selected_genre)
         print_step(ctr)
         if validate(temp_result, threshold):
             result = temp_result
             break
 
+    print("")
     if result is not None:
         artist = result['artists']
         print(result['name'] + " – " + artist[0]['name'] + " (Popularity " + str(result['popularity']) + ")")
