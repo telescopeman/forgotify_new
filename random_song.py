@@ -143,7 +143,7 @@ def select_genre(input_genre) -> str:
 
     except NoMatchError as e:
         # If all else fails, we should just get a random genre from the list.
-        print(e)
+        print(e, end=" ")
         print("Selecting a new genre at random...")
         selected_genre = choice(valid_genres)
         print("New genre: " + selected_genre)
