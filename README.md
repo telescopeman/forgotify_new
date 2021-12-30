@@ -1,4 +1,4 @@
-# "Forgotify New" (working title)
+# Obscurify
 
 Package with tools for music discovery on Spotify.
 
