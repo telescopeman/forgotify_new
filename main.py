@@ -5,21 +5,14 @@ Genres list scrapped from: http://everynoise.com/everynoise1d.cgi?scope=all&vect
 Spotify Ref: https://developer.spotify.com/documentation/web-api/reference-beta/#category-search
 
 """
-from base64 import b64encode
 from json import load, loads
 from random import choice, randint
 from sys import argv
 
 from fuzzysearch import find_near_matches
-from requests import post, get
 
+from api_manager import get_token, get_song
 from exceptions import NoMatchError
-
-# Spotify API URIs
-SPOTIFY_TOKEN_URL = "https://accounts.spotify.com/api/token"
-SPOTIFY_API_BASE_URL = "https://api.spotify.com"
-API_VERSION = "v1"
-SPOTIFY_API_URL = "{}/{}".format(SPOTIFY_API_BASE_URL, API_VERSION)
 
 # Wildcards for random search
 RANDOM_WILDCARDS = ['%25a%25', 'a%25', '%25a',
@@ -29,33 +22,7 @@ RANDOM_WILDCARDS = ['%25a%25', 'a%25', '%25a',
                     '%25u%25', 'u%25', '%25u']
 
 
-def get_token() -> str:
-    # Get API token from a file.
-    with open('client_secrets.json', 'r') as infile:
-        secrets_web = load(infile)['web']
-
-    client_token = b64encode("{}:{}".format(secrets_web['client_id'],
-                                            secrets_web['client_secret']).encode('UTF-8')).decode('ascii')
-    headers = {"Authorization": "Basic {}".format(client_token)}
-    payload = {"grant_type": "client_credentials"}
-    token_request = post(SPOTIFY_TOKEN_URL, data=payload, headers=headers)
-    request_text: dict = loads(token_request.text)
-    if 'access_token' in request_text:
-        access_token = request_text["access_token"]
-    else:
-
-        """
-        If there is no token returned, the received packet must be an error.
-        The only way this should have happened is if the authentication was incorrect.
-        """
-
-        raise ValueError("Error in authentication! Check the client_secrets.json file, "
-                         "you need to enter your own information instead of leaving it default!")
-
-    return access_token
-
-
-def request_valid_song(authorization_header: str, genre: str) -> dict:
+def request_valid_song(authorization_header: dict, genre: str) -> dict:
     wildcard = choice(RANDOM_WILDCARDS)
 
     # Make a request for the Search API with pattern and random index
@@ -63,15 +30,7 @@ def request_valid_song(authorization_header: str, genre: str) -> dict:
     genre_str = "%20genre:%22{}%22".format(genre.replace(" ", "%20"))
     for i in range(90):
         offset = randint(0, 200)
-        song_request = get(
-            '{}/search?q={}{}&type=track&offset={}'.format(
-                SPOTIFY_API_URL,
-                wildcard,
-                genre_str,
-                offset
-            ),
-            headers=authorization_header
-        )
+        song_request = get_song(wildcard, genre_str, offset, authorization_header)
         try:
             song: dict = choice(loads(song_request.text)['tracks']['items'])
             return song
