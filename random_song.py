@@ -124,7 +124,6 @@ def print_step(step: int):
 
 def select_genre(input_genre) -> str:
     """
-
     :rtype: str
     """
     # Open genres file
@@ -168,10 +167,20 @@ def select_genre(input_genre) -> str:
 
 
 def main():
-    lowest_allowed_threshold = 1
+    """
+    This is the lowest allowed threshold, because anything lower than this
+    will mean the program will never complete.
+    """
+    lowest_allowed_threshold: int = 1
 
-    start_index = 1
+    """
+    Our default threshold without any command line inputs is the same 
+    as the lowest allowed.
+    """
     threshold = lowest_allowed_threshold
+
+    start_index: int = 1
+
     """
     You can optionally include your own custom threshold value.
     The following code handles this in the command line and makes
@@ -184,7 +193,10 @@ def main():
             # Set the threshold to be the inputted number.
             sanitized_value = int(raw_value)
         except ValueError:
-            # If it is not a number, we've reached the genre names in the input - quit this loop.
+            """
+            If it is not convertable to a number, we've reached the 
+            genre names in the input - quit this loop.
+            """
             break
 
         if sanitized_value < lowest_allowed_threshold:
