@@ -198,9 +198,9 @@ def main():
         artist = result['artists']
         print(result['name'] + " – " + artist[0]['name'] + " (Popularity " + str(result['popularity']) + ")")
         try:
-            print("URL: " + result['preview_url'])
+            print("Preview URL: " + result['preview_url'])
         except TypeError:
-            print("(No preview url to print.)")
+            print("(No preview URL.)")
     else:
         print("No song found.")
 
