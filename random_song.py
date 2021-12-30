@@ -92,7 +92,9 @@ This is completely aesthetic and doesn't really matter for the program.
 def print_step(step: int):
 
     line_length = 17
-    if step >= line_length and step % line_length == 0:
+    if step == 0:
+        print("Searching", end="")
+    elif step >= line_length and step % line_length == 0:
         print()
         mega_step = step / line_length
         # Must be an integer ^
@@ -182,8 +184,6 @@ def main():
 
     # Get genre from command line input
     selected_genre = select_genre(input_genre)
-
-    print("Searching...", end="")
 
     result = None
     for ctr in range(20000):
