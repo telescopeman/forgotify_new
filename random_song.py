@@ -9,7 +9,7 @@ from base64 import b64encode
 from json import load, loads
 from random import choice, randint
 from requests import post, get
-from sys import argv, exit
+from sys import argv
 from fuzzysearch import find_near_matches
 
 # Spotify API URIs
@@ -27,22 +27,20 @@ RANDOM_WILDCARDS = ['%25a%25', 'a%25', '%25a',
 
 
 def get_token() -> str:
-    try:
-        with open('client_secrets.json', 'r') as infile:
-            secrets_web = load(infile)['web']
-    except FileNotFoundError:
-        raise FileNotFoundError("Couldn't find client_secrets.json file!")
+    with open('client_secrets.json', 'r') as infile:
+        secrets_web = load(infile)['web']
 
     client_token = b64encode("{}:{}".format(secrets_web['client_id'],
                                             secrets_web['client_secret']).encode('UTF-8')).decode('ascii')
     headers = {"Authorization": "Basic {}".format(client_token)}
     payload = {"grant_type": "client_credentials"}
     token_request = post(SPOTIFY_TOKEN_URL, data=payload, headers=headers)
-    try:
-        access_token = loads(token_request.text)["access_token"]
-    except KeyError:
-        raise RuntimeError("Error in authentication! Check the client_secrets.json file, "
-                           "you need to enter your own information instead of leaving it default!")
+    request_text: dict = loads(token_request.text)
+    if 'access_token' in request_text:
+        access_token = request_text["access_token"]
+    else:
+        raise ValueError("Error in authentication! Check the client_secrets.json file, "
+                         "you need to enter your own information instead of leaving it default!")
 
     return access_token
 
@@ -55,7 +53,7 @@ def request_valid_song(access_token: str, genre: str):
 
     # Cap the max number of requests until it decides something's up.
     genre_str = "%20genre:%22{}%22".format(genre.replace(" ", "%20"))
-    for i in range(51):
+    for i in range(90):
         offset = randint(0, 200)
         try:
             song_request = get(
@@ -77,11 +75,6 @@ def request_valid_song(access_token: str, genre: str):
 
 
 def validate(track: dict, threshold: int) -> bool:
-    if threshold > 100:
-        return True
-    elif threshold <= 0:
-        return False
-
     if int(track['popularity']) < threshold:
         # Might introduce a more thorough check later...
         return True
@@ -106,42 +99,42 @@ def print_step(step: int):
     """
 
 
-def select_genre(args) -> str:
+def select_genre(input_genre) -> str:
     # Open genres file
-    n_args = len(args)
-    try:
-        with open('genres.json', 'r') as infile:
-            valid_genres = load(infile)
-    except FileNotFoundError:
-        print("Couldn't find genres.json file!")
-        exit(1)
+    with open('genres.json', 'r') as infile:
+        valid_genres = load(infile)
 
-    # If genre specified by command line argument, choose it.
-    # Otherwise, choose randomly. It's seemingly not possible to make it
-    # any genre, or else it starts bugging out and giving random pop songs.
-    if n_args == 0 or args[0] == "":
+    """
+    If genre was specified by command line argument, choose it.
+    Otherwise, choose randomly. It's seemingly not possible to make it
+    any genre, or else it starts bugging out and giving random pop songs.
+    """
+    if len(input_genre) == 0 or input_genre[0] == "":
         print("No genre chosen: selecting a genre at random...")
         selected_genre = choice(valid_genres)
         print("New genre: " + selected_genre)
     else:
-        selected_genre = (" ".join(args)).lower()
+        selected_genre = (" ".join(input_genre)).lower()
 
-    # Call the API for a song that matches the criteria
-    if selected_genre not in valid_genres:
-        # If genre not found as it is, try fuzzy search with Levenhstein distance 2
-        print("Genre entered was '" + selected_genre + "', which is not in the list of genres supported. Attempting "
-                                                       "to find similar genre...")
-        valid_genres_to_text = " ".join(valid_genres)
-        try:
-            selected_genre = find_near_matches(selected_genre, valid_genres_to_text, max_l_dist=2)[0].matched
-            print("New genre is '" + selected_genre + "'.")
-        except IndexError:
-            # If this didn't work either, just select at random.
-            print("Unable to resolve. Selecting a genre at random...")
-            selected_genre = choice(valid_genres)
-            print("New genre: " + selected_genre)
+        # Make sure this is a valid genre...
+        if selected_genre not in valid_genres:
+            # If genre not found as it is, try fuzzy search with Levenhstein distance 2
+            print("Genre entered was '" + selected_genre + "', which is not in the list of genres supported. "
+                                                           "Attempting to find similar genre...")
+            valid_genres_to_text = " ".join(valid_genres)
+            try:
+                selected_genre = find_near_matches(selected_genre, valid_genres_to_text, max_l_dist=2)[0].matched
+                print("New genre is '" + selected_genre + "'.")
+            except IndexError:
+                # If this didn't work either, just select at random.
+                print("Unable to resolve. Selecting a genre at random...")
+                selected_genre = choice(valid_genres)
+                print("New genre: " + selected_genre)
 
     return selected_genre
+
+
+LOWEST_ALLOWED_THRESHOLD = 1
 
 
 def main():
@@ -149,17 +142,27 @@ def main():
     threshold = 1
     # You can optionally include your own custom threshold value.
     while start_index < len(argv):
+
         try:
+            # If the current argument is a number, this should be fine.
+            # Set the threshold to be the inputted number.
             threshold = int(argv[start_index])
-            start_index = start_index + 1
         except ValueError:
+            # If it is not a number, we've reached the genre inputting - quit this loop.
             break
+
+        start_index = start_index + 1
+
+    if threshold < LOWEST_ALLOWED_THRESHOLD:
+        raise ValueError("Threshold is too low to find any songs! Must be " + str(LOWEST_ALLOWED_THRESHOLD) +
+                         " or higher!")
+
     # trim our arguments to only include what should be the genre name
-    args = argv[start_index:]
+    input_genre = argv[start_index:]
 
     # Get a Spotify API token
     access_token = get_token()
-    selected_genre = select_genre(args)
+    selected_genre = select_genre(input_genre)
 
     print("Searching...")
 
