@@ -1,6 +1,6 @@
 """
 Module that makes use of the Spotify Web API to retrieve pseudo-random obscure songs based
-or not on a given exiting Spotify genre (look at genres.json, filled with info
+or not on a given existing Spotify genre (look at genres.json, filled with info
 scrapped from http://everynoise.com/everynoise1d.cgi?scope=all&vector=popularity)
 Spotify Ref: https://developer.spotify.com/documentation/web-api/reference-beta/#category-search
 
