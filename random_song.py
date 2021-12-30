@@ -155,7 +155,7 @@ def main():
     lowest_allowed_threshold = 1
 
     start_index = 1
-    threshold = 1
+    threshold = lowest_allowed_threshold
     # You can optionally include your own custom threshold value.
     while start_index < len(argv):
         try:
@@ -172,11 +172,13 @@ def main():
         raise ValueError("Threshold is too low to find any songs! Must be " + str(lowest_allowed_threshold) +
                          " or higher!")
 
+    # Get a Spotify API token
+    access_token = get_token()
+
     # Trim our arguments to only include what should be the genre name
     input_genre = argv[start_index:]
 
-    # Get a Spotify API token
-    access_token = get_token()
+    # Get genre from command line input
     selected_genre = select_genre(input_genre)
 
     print("Searching...", end="")
