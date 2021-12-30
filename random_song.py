@@ -151,10 +151,9 @@ def select_genre(input_genre) -> str:
     return selected_genre
 
 
-LOWEST_ALLOWED_THRESHOLD = 1
-
-
 def main():
+    lowest_allowed_threshold = 1
+
     start_index = 1
     threshold = 1
     # You can optionally include your own custom threshold value.
@@ -170,8 +169,8 @@ def main():
 
         start_index = start_index + 1
 
-    if threshold < LOWEST_ALLOWED_THRESHOLD:
-        raise ValueError("Threshold is too low to find any songs! Must be " + str(LOWEST_ALLOWED_THRESHOLD) +
+    if threshold < lowest_allowed_threshold:
+        raise ValueError("Threshold is too low to find any songs! Must be " + str(lowest_allowed_threshold) +
                          " or higher!")
 
     # Trim our arguments to only include what should be the genre name
