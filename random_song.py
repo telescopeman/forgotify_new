@@ -1,7 +1,7 @@
 """
-Module that makes use of the Spotify Web API to retrieve pseudo-random obscure songs based
-or not on a given existing Spotify genre (look at genres.json, filled with info
-scrapped from http://everynoise.com/everynoise1d.cgi?scope=all&vector=popularity)
+Module that makes use of the Spotify Web API to retrieve songs below a selected
+'threshold' of popularity.
+Genres list scrapped from: http://everynoise.com/everynoise1d.cgi?scope=all&vector=popularity
 Spotify Ref: https://developer.spotify.com/documentation/web-api/reference-beta/#category-search
 
 """
@@ -31,8 +31,7 @@ def get_token() -> str:
         with open('client_secrets.json', 'r') as infile:
             secrets_web = load(infile)['web']
     except FileNotFoundError:
-        print("Couldn't find client_secrets.json file!")
-        exit(1)
+        raise FileNotFoundError("Couldn't find client_secrets.json file!")
 
     client_token = b64encode("{}:{}".format(secrets_web['client_id'],
                                             secrets_web['client_secret']).encode('UTF-8')).decode('ascii')
@@ -48,7 +47,7 @@ def get_token() -> str:
     return access_token
 
 
-def request_valid_song(access_token: str, genre: str) -> dict:
+def request_valid_song(access_token: str, genre: str):
     wildcard = choice(RANDOM_WILDCARDS)
 
     # Make a request for the Search API with pattern and random index
@@ -107,29 +106,14 @@ def print_step(step: int):
     """
 
 
-def main():
-    start_index: int = 1
-    threshold: int = 1
-    # You can optionally include your own custom threshold value.
-    while start_index < len(argv):
-        try:
-            threshold = int(argv[start_index])
-            start_index = start_index + 1
-        except ValueError:
-            break
-    # trim our arguments to only include what should be the genre name
-    args = argv[start_index:]
-    n_args = len(args)
-
-    # Get a Spotify API token
-    access_token = get_token()
-
+def select_genre(args) -> str:
     # Open genres file
+    n_args = len(args)
     try:
         with open('genres.json', 'r') as infile:
             valid_genres = load(infile)
     except FileNotFoundError:
-        print("Couldn't find genres file!")
+        print("Couldn't find genres.json file!")
         exit(1)
 
     # If genre specified by command line argument, choose it.
@@ -156,6 +140,26 @@ def main():
             print("Unable to resolve. Selecting a genre at random...")
             selected_genre = choice(valid_genres)
             print("New genre: " + selected_genre)
+
+    return selected_genre
+
+
+def main():
+    start_index = 1
+    threshold = 1
+    # You can optionally include your own custom threshold value.
+    while start_index < len(argv):
+        try:
+            threshold = int(argv[start_index])
+            start_index = start_index + 1
+        except ValueError:
+            break
+    # trim our arguments to only include what should be the genre name
+    args = argv[start_index:]
+
+    # Get a Spotify API token
+    access_token = get_token()
+    selected_genre = select_genre(args)
 
     print("Searching...")
 
