@@ -158,13 +158,12 @@ def main():
     threshold = 1
     # You can optionally include your own custom threshold value.
     while start_index < len(argv):
-
         try:
             # If the current argument is a number, this should be fine.
             # Set the threshold to be the inputted number.
             threshold = int(argv[start_index])
         except ValueError:
-            # If it is not a number, we've reached the genre inputting - quit this loop.
+            # If it is not a number, we've reached the genre names in the input - quit this loop.
             break
 
         start_index = start_index + 1
