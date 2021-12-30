@@ -105,7 +105,7 @@ def print_step(step: int):
         elif mega_step < 20:
             header = "Continuing searching"
         else:
-            header = "Something may have gone wrong - you may want to restart the app."
+            header = "Something may have gone wrong - you may want to restart the app"
 
         print(header + "...", end="")
 
