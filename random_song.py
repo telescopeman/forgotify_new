@@ -8,9 +8,11 @@ Spotify Ref: https://developer.spotify.com/documentation/web-api/reference-beta/
 from base64 import b64encode
 from json import load, loads
 from random import choice, randint
-from requests import post, get
 from sys import argv
+
 from fuzzysearch import find_near_matches
+from requests import post, get
+
 from exceptions import NoMatchError
 
 # Spotify API URIs
@@ -28,6 +30,7 @@ RANDOM_WILDCARDS = ['%25a%25', 'a%25', '%25a',
 
 
 def get_token() -> str:
+    # Get API token from a file.
     with open('client_secrets.json', 'r') as infile:
         secrets_web = load(infile)['web']
 
@@ -40,6 +43,12 @@ def get_token() -> str:
     if 'access_token' in request_text:
         access_token = request_text["access_token"]
     else:
+
+        """
+        If there is no token returned, the received packet must be an error.
+        The only way this should have happened is if the authentication was incorrect.
+        """
+
         raise ValueError("Error in authentication! Check the client_secrets.json file, "
                          "you need to enter your own information instead of leaving it default!")
 
@@ -93,7 +102,7 @@ def print_step(step: int):
 
     line_length = 17
     if step % line_length == 0:
-
+        print()
         mega_step = step / line_length
         # Must be an integer ^
         if mega_step == 0:
@@ -115,6 +124,10 @@ def print_step(step: int):
 
 
 def select_genre(input_genre) -> str:
+    """
+
+    :rtype: str
+    """
     # Open genres file
     with open('genres.json', 'r') as infile:
         valid_genres = load(infile)
@@ -162,10 +175,11 @@ def main():
     threshold = lowest_allowed_threshold
     # You can optionally include your own custom threshold value.
     while start_index < len(argv):
+        raw_value: str = argv[start_index]
         try:
             # If the current argument is a number, this should be fine.
             # Set the threshold to be the inputted number.
-            threshold = int(argv[start_index])
+            threshold = int(raw_value)
         except ValueError:
             # If it is not a number, we've reached the genre names in the input - quit this loop.
             break
