@@ -181,18 +181,21 @@ def main():
 
     # Trim our arguments to only include what should be the genre name
     input_genre = argv[start_index:]
-
     # Get genre from command line input
     selected_genre = select_genre(input_genre)
 
     result = None
     for ctr in range(20000):
+        # Get a random song in the genre.
         temp_result = request_valid_song(access_token, genre=selected_genre)
+        # Update the console to show the user something is indeed happening
         print_step(ctr)
         if validate(temp_result, threshold):
+            # If it's at the right level of popularity, this is our song.
             result = temp_result
             break
 
+    # Go to new line
     print("")
     if result is not None:
         artist = result['artists']
