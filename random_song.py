@@ -99,7 +99,6 @@ This is completely aesthetic and doesn't really matter for the program.
 
 
 def print_step(step: int):
-
     line_length = 17
     if step % line_length == 0:
         print()
@@ -173,22 +172,30 @@ def main():
 
     start_index = 1
     threshold = lowest_allowed_threshold
-    # You can optionally include your own custom threshold value.
+    """
+    You can optionally include your own custom threshold value.
+    The following code handles this in the command line and makes
+    sure the input is safe.
+    """
     while start_index < len(argv):
         raw_value: str = argv[start_index]
         try:
             # If the current argument is a number, this should be fine.
             # Set the threshold to be the inputted number.
-            threshold = int(raw_value)
+            sanitized_value = int(raw_value)
         except ValueError:
             # If it is not a number, we've reached the genre names in the input - quit this loop.
             break
 
-        start_index = start_index + 1
+        if sanitized_value < lowest_allowed_threshold:
+            raise ValueError("Threshold value '" + raw_value +
+                             "' is too low to find any songs!" +
+                             " Must be " +
+                             str(lowest_allowed_threshold) +
+                             " or higher!")
 
-    if threshold < lowest_allowed_threshold:
-        raise ValueError("Threshold is too low to find any songs! Must be " + str(lowest_allowed_threshold) +
-                         " or higher!")
+        threshold = sanitized_value
+        start_index = start_index + 1
 
     # Get a Spotify API token
     access_token = get_token()
