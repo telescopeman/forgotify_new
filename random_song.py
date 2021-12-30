@@ -92,13 +92,13 @@ This is completely aesthetic and doesn't really matter for the program.
 def print_step(step: int):
 
     line_length = 17
-    if step == 0:
-        print("Searching", end="")
-    elif step >= line_length and step % line_length == 0:
-        print()
+    if step % line_length == 0:
+
         mega_step = step / line_length
         # Must be an integer ^
-        if mega_step < 3:
+        if mega_step == 0:
+            header = "Searching"
+        elif mega_step < 3:
             header = "Still searching"
         elif mega_step < 6:
             header = "Yet still searching"
