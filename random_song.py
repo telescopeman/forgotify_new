@@ -153,8 +153,17 @@ def select_genre(input_genre) -> str:
                 except IndexError:
                     raise NoMatchError("Fuzzy search failed.")
 
-                selected_genre = first_match.matched
-                print("New genre is '" + selected_genre + "'.")
+                """
+                We make sure to strip() the whitespace from both sides.
+                If not for this, the genre name may end up malformed.
+                """
+                selected_genre = first_match.matched.strip()
+
+                if selected_genre in valid_genres:
+                    print("New genre is '" + selected_genre + "'.")
+                else:
+                    # If by some bizarre bug, it's still malformed, default to random again.
+                    raise NoMatchError("Fuzzy search failed.")
 
     except NoMatchError as e:
         # If all else fails, we should just get a random genre from the list.
