@@ -11,6 +11,7 @@ from random import choice, randint
 from requests import post, get
 from sys import argv
 from fuzzysearch import find_near_matches
+from exceptions import NoMatchError
 
 # Spotify API URIs
 SPOTIFY_TOKEN_URL = "https://accounts.spotify.com/api/token"
@@ -109,27 +110,32 @@ def select_genre(input_genre) -> str:
     Otherwise, choose randomly. It's seemingly not possible to make it
     any genre, or else it starts bugging out and giving random pop songs.
     """
-    if len(input_genre) == 0 or input_genre[0] == "":
-        print("No genre chosen: selecting a genre at random...")
+    try:
+        if len(input_genre) == 0 or input_genre[0] == "":
+            raise NoMatchError("Empty genre field.")
+        else:
+            selected_genre = (" ".join(input_genre)).lower()
+
+            # Make sure this is a valid genre...
+            if selected_genre not in valid_genres:
+                # If genre not found as it is, try fuzzy search with Levenhstein distance 2
+                print("Genre entered was '" + selected_genre + "', which is not in the list of genres supported. "
+                                                               "Attempting to find similar genre via fuzzy search...")
+                valid_genres_to_text = " ".join(valid_genres)
+                near_matches = find_near_matches(selected_genre, valid_genres_to_text, max_l_dist=2)
+                try:
+                    first_match = near_matches[0]
+                except IndexError:
+                    raise NoMatchError("Fuzzy search failed.")
+
+                selected_genre = first_match.matched
+                print("New genre is '" + selected_genre + "'.")
+
+    except NoMatchError as e:
+        print(e)
+        print("Selecting a new genre at random...")
         selected_genre = choice(valid_genres)
         print("New genre: " + selected_genre)
-    else:
-        selected_genre = (" ".join(input_genre)).lower()
-
-        # Make sure this is a valid genre...
-        if selected_genre not in valid_genres:
-            # If genre not found as it is, try fuzzy search with Levenhstein distance 2
-            print("Genre entered was '" + selected_genre + "', which is not in the list of genres supported. "
-                                                           "Attempting to find similar genre...")
-            valid_genres_to_text = " ".join(valid_genres)
-            try:
-                selected_genre = find_near_matches(selected_genre, valid_genres_to_text, max_l_dist=2)[0].matched
-                print("New genre is '" + selected_genre + "'.")
-            except IndexError:
-                # If this didn't work either, just select at random.
-                print("Unable to resolve. Selecting a genre at random...")
-                selected_genre = choice(valid_genres)
-                print("New genre: " + selected_genre)
 
     return selected_genre
 
