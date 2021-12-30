@@ -90,7 +90,7 @@ This is completely aesthetic and doesn't really matter for the program.
 
 
 def print_step(step: int):
-    print(".", end="")
+
     line_length = 17
     if step >= line_length and step % line_length == 0:
         print()
@@ -108,6 +108,8 @@ def print_step(step: int):
             header = "Something may have gone wrong - you may want to restart the app"
 
         print(header + "...", end="")
+    else:
+        print(".", end="")
 
 
 def select_genre(input_genre) -> str:
