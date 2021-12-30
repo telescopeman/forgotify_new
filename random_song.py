@@ -55,13 +55,11 @@ def get_token() -> str:
     return access_token
 
 
-def request_valid_song(access_token: str, genre: str):
+def request_valid_song(authorization_header: str, genre: str) -> dict:
     wildcard = choice(RANDOM_WILDCARDS)
 
     # Make a request for the Search API with pattern and random index
-    authorization_header = {"Authorization": "Bearer {}".format(access_token)}
 
-    # Cap the max number of requests until it decides something's up.
     genre_str = "%20genre:%22{}%22".format(genre.replace(" ", "%20"))
     for i in range(90):
         offset = randint(0, 200)
@@ -154,8 +152,9 @@ def select_genre(input_genre) -> str:
                     raise NoMatchError("Fuzzy search failed.")
 
                 """
-                We make sure to strip() the whitespace from both sides.
-                If not for this, the genre name may end up malformed.
+                We make sure to .strip() the whitespace from both 
+                sides of the genre name. Without this, the genre
+                name may end up malformed.
                 """
                 selected_genre = first_match.matched.strip()
 
@@ -218,8 +217,10 @@ def main():
         threshold = sanitized_value
         start_index = start_index + 1
 
-    # Get a Spotify API token
+    # Get a Spotify API token:
     access_token = get_token()
+    # Convert it to an authorization header:
+    authorization_header = {"Authorization": "Bearer {}".format(access_token)}
 
     # Trim our arguments to only include what should be the genre name
     input_genre = argv[start_index:]
@@ -229,7 +230,7 @@ def main():
     result = None
     for ctr in range(20000):
         # Get a random song in the genre.
-        temp_result = request_valid_song(access_token, genre=selected_genre)
+        temp_result = request_valid_song(authorization_header, genre=selected_genre)
         # Update the console to show the user something is indeed happening
         print_step(ctr)
         if validate(temp_result, threshold):
